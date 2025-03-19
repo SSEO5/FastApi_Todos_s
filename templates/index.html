@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>To-Do List</title>
+  </head>
+  <body>
+    <h1>To-Do List</h1>
+    <ul id="todo-list"></ul>
+    <form id="todo-form">
+      <input type="text" id="title" placeholder="Title" required />
+      <input type="text" id="description" placeholder="Description" required />
+      <button type="submit">Add To-Do</button>
+    </form>
+    <script>
+      async function fetchTodos() {
+        const response = await fetch("/todos");
+        const todos = await response.json();
+        const todoList = document.getElementById("todo-list");
+        todoList.innerHTML = "";
+
+        todos.forEach((todo) => {
+          const li = document.createElement("li");
+
+          const checkbox = document.createElement("input");
+          checkbox.type = "checkbox";
+          checkbox.checked = todo.completed;
+          checkbox.onchange = () => updateTodo(todo.id, todo.title, todo.description, checkbox.checked);
+
+          const titleSpan = document.createElement("span");
+          titleSpan.textContent = todo.title;
+
+          const titleInput = document.createElement("input");
+          titleInput.type = "text";
+          titleInput.value = todo.title;
+          titleInput.style.display = "none";
+
+          const descriptionSpan = document.createElement("span");
+          descriptionSpan.textContent = `: ${todo.description} (Completed: ${todo.completed})`;
+
+          const descriptionInput = document.createElement("input");
+          descriptionInput.type = "text";
+          descriptionInput.value = todo.description;
+          descriptionInput.style.display = "none";
+
+          const editButton = document.createElement("button");
+          editButton.textContent = "Edit";
+          editButton.onclick = () => {
+            const isEditing = titleSpan.style.display === "none";
+
+            if (isEditing) {
+              updateTodo(todo.id, titleInput.value, descriptionInput.value, checkbox.checked);
+              titleSpan.textContent = titleInput.value;
+              descriptionSpan.textContent = `: ${todo.description} (Completed: ${todo.completed})`;
+            }
+
+            titleSpan.style.display = isEditing ? "inline" : "none";
+            descriptionSpan.style.display = isEditing ? "inline" : "none";
+            titleInput.style.display = isEditing ? "none" : "inline";
+            descriptionInput.style.display = isEditing ? "none" : "inline";
+            editButton.textContent = isEditing ? "Edit" : "Save";
+          };
+
+          const deleteButton = document.createElement("button");
+          deleteButton.textContent = "Delete";
+          deleteButton.onclick = () => deleteTodo(todo.id);
+
+          li.appendChild(checkbox);
+          li.appendChild(titleSpan);
+          li.appendChild(titleInput);
+          li.appendChild(descriptionSpan);
+          li.appendChild(descriptionInput);
+          li.appendChild(editButton);
+          li.appendChild(deleteButton);
+
+          todoList.appendChild(li);
+        });
+      }
+
+      document.getElementById("todo-form").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const title = document.getElementById("title").value;
+        const description = document.getElementById("description").value;
+
+        const response = await fetch("/todos", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: Date.now(), title, description, completed: false }),
+        });
+
+        if (response.ok) fetchTodos();
+      });
+
+      async function updateTodo(todoId, newTitle, newDescription, completed) {
+        const response = await fetch(`/todos/${todoId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: todoId, title: newTitle, description: newDescription, completed }),
+        });
+
+        if (response.ok) fetchTodos();
+      }
+
+      async function deleteTodo(todoId) {
+        const response = await fetch(`/todos/${todoId}`, { method: "DELETE" });
+        if (response.ok) fetchTodos();
+      }
+
+      fetchTodos();
+    </script>
+  </body>
+</html>
