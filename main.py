@@ -45,7 +45,7 @@ def get_todos():
 @app.post("/todos", response_model=TodoItem)
 def create_todo(todo: TodoItem):
     todos = load_todos()
-    todos.append(todo.dict())
+    todos.append(todo.model_dump(mode="json"))
     save_todos(todos)
     return todo
 
@@ -56,7 +56,7 @@ def update_todo(todo_id: int, updated_todo: TodoItem):
     todos = load_todos()
     for todo in todos:
         if todo["id"] == todo_id:
-            todo.update(updated_todo.dict())
+            todo.update(updated_todo.model_dump(mode="json", exclude_unset=True))
             save_todos(todos)
             return updated_todo
     raise HTTPException(status_code=404, detail="To-Do item not found")
