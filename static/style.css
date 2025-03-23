@@ -50,7 +50,7 @@ ul#todo-list {
   list-style: none;
   padding: 0;
   margin: 0 auto;
-  max-width: 600px;
+  max-width: 750px;
   width: 100%;
 }
 
@@ -75,6 +75,12 @@ ul#todo-list li {
 .todo-actions {
   display: flex;
   gap: 6px;
+}
+
+.todo-due {
+  font-size: 0.9rem;
+  color: #4a90e2;
+  margin-left: 32px;
 }
 
 ul#todo-list li:last-child {
@@ -114,4 +120,16 @@ input[type="checkbox"]:checked::after {
   border: solid white;
   border-width: 0 2px 2px 0;
   transform: translate(-50%, -50%) rotate(45deg);
+}
+
+input[type="date"] {
+  padding: 0.5rem;
+  border: 1px solid #4a90e2;
+  border-radius: 6px;
+  background-color: #ffffff;
+  color: #333;
+}
+
+input[type="date"]:focus {
+  outline: none;
 }
