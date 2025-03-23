@@ -4,15 +4,16 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>To-Do List</title>
+    <link rel="stylesheet" href="/static/style.css">
   </head>
   <body>
     <h1>To-Do List</h1>
-    <ul id="todo-list"></ul>
     <form id="todo-form">
       <input type="text" id="title" placeholder="Title" required />
       <input type="text" id="description" placeholder="Description" required />
       <button type="submit">Add To-Do</button>
     </form>
+    <ul id="todo-list"></ul>
     <script>
       async function fetchTodos() {
         const response = await fetch("/todos");
@@ -37,7 +38,7 @@
           titleInput.style.display = "none";
 
           const descriptionSpan = document.createElement("span");
-          descriptionSpan.textContent = `: ${todo.description} (Completed: ${todo.completed})`;
+          descriptionSpan.textContent = `: ${todo.description}`;
 
           const descriptionInput = document.createElement("input");
           descriptionInput.type = "text";
@@ -52,7 +53,7 @@
             if (isEditing) {
               updateTodo(todo.id, titleInput.value, descriptionInput.value, checkbox.checked);
               titleSpan.textContent = titleInput.value;
-              descriptionSpan.textContent = `: ${todo.description} (Completed: ${todo.completed})`;
+              descriptionSpan.textContent = `: ${todo.description}`;
             }
 
             titleSpan.style.display = isEditing ? "inline" : "none";
@@ -66,13 +67,25 @@
           deleteButton.textContent = "Delete";
           deleteButton.onclick = () => deleteTodo(todo.id);
 
+          const textWrapper = document.createElement("div");
+          textWrapper.classList.add("todo-text");
+          textWrapper.appendChild(titleSpan);
+          textWrapper.appendChild(descriptionSpan);
+          textWrapper.appendChild(titleInput);
+          textWrapper.appendChild(descriptionInput);
+
+          const buttonWrapper = document.createElement("div");
+          buttonWrapper.classList.add("todo-actions");
+          buttonWrapper.appendChild(editButton);
+          buttonWrapper.appendChild(deleteButton);
+
           li.appendChild(checkbox);
-          li.appendChild(titleSpan);
-          li.appendChild(titleInput);
-          li.appendChild(descriptionSpan);
-          li.appendChild(descriptionInput);
-          li.appendChild(editButton);
-          li.appendChild(deleteButton);
+          li.appendChild(textWrapper);
+          li.appendChild(buttonWrapper);
+
+          if (todo.completed) {
+            li.classList.add("completed");
+          }
 
           todoList.appendChild(li);
         });
