@@ -11,6 +11,7 @@
     <form id="todo-form">
       <input type="text" id="title" placeholder="Title" required />
       <input type="text" id="description" placeholder="Description" required />
+      <input type="date" id="due-date" />
       <button type="submit">Add To-Do</button>
     </form>
     <ul id="todo-list"></ul>
@@ -27,7 +28,7 @@
           const checkbox = document.createElement("input");
           checkbox.type = "checkbox";
           checkbox.checked = todo.completed;
-          checkbox.onchange = () => updateTodo(todo.id, todo.title, todo.description, checkbox.checked);
+          checkbox.onchange = () => updateTodo(todo.id, todo.title, todo.description, checkbox.checked, todo.due_date || null);
 
           const titleSpan = document.createElement("span");
           titleSpan.textContent = todo.title;
@@ -51,15 +52,22 @@
             const isEditing = titleSpan.style.display === "none";
 
             if (isEditing) {
-              updateTodo(todo.id, titleInput.value, descriptionInput.value, checkbox.checked);
+              updateTodo(todo.id, titleInput.value, descriptionInput.value, checkbox.checked, dueDateInput.value || null);
               titleSpan.textContent = titleInput.value;
               descriptionSpan.textContent = `: ${todo.description}`;
+              dueWrapper.firstChild.textContent = dueDateInput.value
+              ? `${formatDate(dueDateInput.value)}까지`
+              : "";
             }
 
             titleSpan.style.display = isEditing ? "inline" : "none";
             descriptionSpan.style.display = isEditing ? "inline" : "none";
             titleInput.style.display = isEditing ? "none" : "inline";
             descriptionInput.style.display = isEditing ? "none" : "inline";
+
+            dueSpan.style.display = isEditing ? "inline" : "none";
+            dueDateInput.style.display = isEditing ? "none" : "inline";
+
             editButton.textContent = isEditing ? "Edit" : "Save";
           };
 
@@ -74,6 +82,23 @@
           textWrapper.appendChild(titleInput);
           textWrapper.appendChild(descriptionInput);
 
+          const dueWrapper = document.createElement("div");
+          dueWrapper.classList.add("todo-due");
+
+          const dueSpan = document.createElement("span");
+          if (todo.due_date) {
+            const formatted = formatDate(todo.due_date);
+            dueSpan.textContent = `${formatted}까지`;
+          }
+
+          const dueDateInput = document.createElement("input");
+          dueDateInput.type = "date";
+          dueDateInput.value = todo.due_date || "";
+          dueDateInput.style.display = "none";
+
+          dueWrapper.appendChild(dueSpan);
+          dueWrapper.appendChild(dueDateInput);
+
           const buttonWrapper = document.createElement("div");
           buttonWrapper.classList.add("todo-actions");
           buttonWrapper.appendChild(editButton);
@@ -81,6 +106,7 @@
 
           li.appendChild(checkbox);
           li.appendChild(textWrapper);
+          li.appendChild(dueWrapper);
           li.appendChild(buttonWrapper);
 
           if (todo.completed) {
@@ -95,21 +121,22 @@
         event.preventDefault();
         const title = document.getElementById("title").value;
         const description = document.getElementById("description").value;
+        const dueDate = document.getElementById("due-date").value;
 
         const response = await fetch("/todos", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id: Date.now(), title, description, completed: false }),
+          body: JSON.stringify({ id: Date.now(), title, description, completed: false, due_date: dueDate || null }),
         });
 
         if (response.ok) fetchTodos();
       });
 
-      async function updateTodo(todoId, newTitle, newDescription, completed) {
+      async function updateTodo(todoId, newTitle, newDescription, completed, dueDate) {
         const response = await fetch(`/todos/${todoId}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id: todoId, title: newTitle, description: newDescription, completed }),
+          body: JSON.stringify({ id: todoId, title: newTitle, description: newDescription, completed,  due_date: dueDate || null, }),
         });
 
         if (response.ok) fetchTodos();
@@ -118,6 +145,11 @@
       async function deleteTodo(todoId) {
         const response = await fetch(`/todos/${todoId}`, { method: "DELETE" });
         if (response.ok) fetchTodos();
+      }
+
+      function formatDate(dateString) {
+        const [year, month, day] = dateString.split("-");
+        return `${parseInt(month)}월 ${parseInt(day)}일`;
       }
 
       fetchTodos();
