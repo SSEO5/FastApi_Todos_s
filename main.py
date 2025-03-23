@@ -4,6 +4,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 import json
 import os
+import datetime
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -15,6 +16,7 @@ class TodoItem(BaseModel):
     title: str
     description: str
     completed: bool
+    due_date: datetime.date | None
 
 
 # JSON 파일 경로
