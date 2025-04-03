@@ -5,9 +5,16 @@ from pydantic import BaseModel
 import json
 import os
 import datetime
+from enum import Enum
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
+
+
+class TodoStatus(str, Enum):
+    not_started = "시작 전"
+    in_progress = "진행 중"
+    completed = "완료"
 
 
 # To-Do 항목 모델
@@ -17,6 +24,7 @@ class TodoItem(BaseModel):
     description: str
     completed: bool
     due_date: datetime.date | None
+    status: TodoStatus = TodoStatus.not_started
 
 
 # JSON 파일 경로
