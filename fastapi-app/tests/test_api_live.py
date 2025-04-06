@@ -109,3 +109,81 @@ def test_delete_todo_not_found():
     response = requests.delete(f"{BASE_URL}/todos/1")
     assert response.status_code == 200
     assert response.json()["message"] == "To-Do item deleted"
+
+
+def test_read_root():
+    response = requests.get(f"{BASE_URL}/")
+    assert response.status_code == 200
+    assert "<html" in response.text.lower()
+
+
+def test_reset():
+    todo = {
+        "id": 99,
+        "title": "Temp",
+        "description": "Will be cleared",
+        "due_date": None,
+        "status": "시작 전",
+    }
+    requests.post(f"{BASE_URL}/todos", json=todo)
+
+    response = requests.delete(f"{BASE_URL}/reset")
+    assert response.status_code == 200
+    assert response.json()["message"] == "Reset complete"
+
+    check = requests.get(f"{BASE_URL}/todos")
+    assert check.status_code == 200
+    assert check.json() == []
+
+
+def test_search_todos():
+    todo1 = {
+        "id": 10,
+        "title": "Buy milk",
+        "description": "",
+        "due_date": None,
+        "status": "시작 전",
+    }
+    todo2 = {
+        "id": 11,
+        "title": "Read book",
+        "description": "",
+        "due_date": None,
+        "status": "시작 전",
+    }
+    requests.post(f"{BASE_URL}/todos", json=todo1)
+    requests.post(f"{BASE_URL}/todos", json=todo2)
+
+    response = requests.get(f"{BASE_URL}/todos/search?query=milk")
+    assert response.status_code == 200
+    result = response.json()
+    assert len(result) == 1
+    assert result[0]["title"] == "Buy milk"
+
+
+def test_todo_stats():
+    todos = [
+        {
+            "id": 21,
+            "title": "A",
+            "description": "",
+            "due_date": None,
+            "status": "완료",
+        },
+        {
+            "id": 22,
+            "title": "B",
+            "description": "",
+            "due_date": None,
+            "status": "시작 전",
+        },
+    ]
+    for todo in todos:
+        requests.post(f"{BASE_URL}/todos", json=todo)
+
+    response = requests.get(f"{BASE_URL}/todos/stats")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["total"] == 2
+    assert data["completed"] == 1
+    assert data["not_completed"] == 1

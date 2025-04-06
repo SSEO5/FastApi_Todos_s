@@ -6,7 +6,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 
 import pytest
 from fastapi.testclient import TestClient
-from main import app, save_todos, TodoItem, TodoStatus
+from main import app, save_todos, load_todos, TodoItem, TodoStatus
 
 client = TestClient(app)
 
@@ -113,3 +113,79 @@ def test_delete_todo_not_found():
     response = client.delete("/todos/1")
     assert response.status_code == 200
     assert response.json()["message"] == "To-Do item deleted"
+
+
+def test_read_root():
+    response = client.get("/")
+    assert response.status_code == 200
+    assert "html" in response.text.lower()
+
+
+def test_reset():
+    save_todos(
+        [
+            {
+                "id": 1,
+                "title": "a",
+                "description": "b",
+                "due_date": None,
+                "status": "시작 전",
+            }
+        ]
+    )
+    response = client.delete("/reset")
+    assert response.status_code == 200
+    assert response.json()["message"] == "Reset complete"
+    assert load_todos() == []
+
+
+def test_search_todos():
+    save_todos(
+        [
+            {
+                "id": 1,
+                "title": "Buy milk",
+                "description": "",
+                "due_date": None,
+                "status": "시작 전",
+            },
+            {
+                "id": 2,
+                "title": "Read book",
+                "description": "",
+                "due_date": None,
+                "status": "시작 전",
+            },
+        ]
+    )
+    response = client.get("/todos/search?query=milk")
+    assert response.status_code == 200
+    assert len(response.json()) == 1
+    assert response.json()[0]["title"] == "Buy milk"
+
+
+def test_todo_stats():
+    save_todos(
+        [
+            {
+                "id": 1,
+                "title": "A",
+                "description": "",
+                "due_date": None,
+                "status": "완료",
+            },
+            {
+                "id": 2,
+                "title": "B",
+                "description": "",
+                "due_date": None,
+                "status": "진행 중",
+            },
+        ]
+    )
+    response = client.get("/todos/stats")
+    assert response.status_code == 200
+    stats = response.json()
+    assert stats["total"] == 2
+    assert stats["completed"] == 1
+    assert stats["not_completed"] == 1
