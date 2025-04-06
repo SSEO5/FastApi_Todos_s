@@ -1,2 +1,8 @@
 fastapi
 uvicorn[standard]
+pytest
+pytest-html
+httpx
+pytest-cov
+requests
+python-dotenv
