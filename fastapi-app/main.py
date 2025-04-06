@@ -95,3 +95,9 @@ def read_root():
     with open("templates/index.html", "r") as file:
         content = file.read()
     return HTMLResponse(content=content)
+
+
+@app.delete("/reset")
+def reset():
+    save_todos([])
+    return {"message": "Reset complete"}
