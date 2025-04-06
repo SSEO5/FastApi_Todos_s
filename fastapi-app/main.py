@@ -101,3 +101,22 @@ def read_root():
 def reset():
     save_todos([])
     return {"message": "Reset complete"}
+
+
+@app.get("/todos/search", response_model=list[TodoItem])
+def search_todos(query: str = ""):
+    todos = load_todos()
+    results = [todo for todo in todos if query.lower() in todo["title"].lower()]
+    return results
+
+
+@app.get("/todos/stats")
+def todo_stats():
+    todos = load_todos()
+    completed = [t for t in todos if t["status"] == "완료"]
+    not_completed = [t for t in todos if t["status"] != "완료"]
+    return {
+        "total": len(todos),
+        "completed": len(completed),
+        "not_completed": len(not_completed),
+    }
