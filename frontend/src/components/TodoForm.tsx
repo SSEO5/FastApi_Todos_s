@@ -1,5 +1,7 @@
 import { useState } from "react";
+import styled from "styled-components";
 import { Todo } from "../types";
+import { Button } from "./common";
 
 export const TodoForm = ({ onAdd }: { onAdd: (todo: Todo) => void }) => {
   const [title, setTitle] = useState("");
@@ -13,9 +15,8 @@ export const TodoForm = ({ onAdd }: { onAdd: (todo: Todo) => void }) => {
       id: Date.now(),
       title,
       description,
-      completed: false,
       due_date: dueDate || null,
-      status: status,
+      status,
     });
     setTitle("");
     setDescription("");
@@ -23,36 +24,109 @@ export const TodoForm = ({ onAdd }: { onAdd: (todo: Todo) => void }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <input
-        type="text"
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        placeholder="Title"
-        required
-      />
-      <input
-        type="text"
-        value={description}
-        onChange={(e) => setDescription(e.target.value)}
-        placeholder="Description"
-        required
-      />
-      <input
-        type="date"
-        value={dueDate}
-        onChange={(e) => setDueDate(e.target.value)}
-      />
-      <select
-        value={status}
-        onChange={(e) => setStatus(e.target.value as Todo["status"])}
-      >
-        <option value="시작 전">시작 전</option>
-        <option value="진행 중">진행 중</option>
-        <option value="완료">완료</option>
-      </select>
+    <Card onSubmit={handleSubmit}>
+      <Field>
+        <Label>제목</Label>
+        <Input
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          required
+        />
+      </Field>
 
-      <button type="submit">Add To-Do</button>
-    </form>
+      <Field>
+        <Label>설명</Label>
+        <Input
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          required
+        />
+      </Field>
+      <Field>
+        <Label>마감일</Label>
+        <Input
+          type="date"
+          value={dueDate}
+          onChange={(e) => setDueDate(e.target.value)}
+        />
+      </Field>
+
+      <Field>
+        <Label>상태</Label>
+        <StatusButtons>
+          {["시작 전", "진행 중", "완료"].map((s) => (
+            <StatusButton
+              key={s}
+              active={status === s}
+              onClick={() => setStatus(s as Todo["status"])}
+              type="button"
+            >
+              {s}
+            </StatusButton>
+          ))}
+        </StatusButtons>
+      </Field>
+      <ButtonWrapper>
+        <Button type="submit">추가</Button>
+      </ButtonWrapper>
+    </Card>
   );
 };
+
+const Card = styled.form`
+  padding: 2rem;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+`;
+
+const Field = styled.div`
+  display: flex;
+  flex-direction: column;
+`;
+
+const Label = styled.label`
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+  color: #374151;
+`;
+
+const Input = styled.input`
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  outline: none;
+
+  &:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+  }
+`;
+
+const StatusButtons = styled.div`
+  display: flex;
+  gap: 0.5rem;
+`;
+
+const StatusButton = styled.button<{ active: boolean }>`
+  padding: 0.7rem 1rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  background-color: ${({ active }) => (active ? "#3b82f6" : "#f3f4f6")};
+  color: ${({ active }) => (active ? "white" : "#374151")};
+  border: none;
+  cursor: pointer;
+
+  &:hover {
+    background-color: ${({ active }) => (active ? "#306bc9" : "#e5e7eb")};
+  }
+`;
+
+const ButtonWrapper = styled.div`
+  margin-top: 1rem;
+  display: flex;
+  justify-content: flex-end;
+`;

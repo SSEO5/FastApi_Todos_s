@@ -1,8 +1,15 @@
 import { useState, useEffect } from "react";
-import { fetchTodos, addTodo, updateTodo, deleteTodo } from "./api";
+import {
+  fetchTodos,
+  addTodo,
+  updateTodo,
+  deleteTodo,
+  searchTodos,
+} from "./api";
 import { Todo } from "./types";
-import { TodoForm, TodoItem } from "./components";
+import { AddTodoModal, Dashboard, SearchBar, TodoListGrid } from "./components";
 import "./App.css";
+import { styled } from "styled-components";
 
 function App() {
   const [todos, setTodos] = useState<Todo[]>([]);
@@ -15,6 +22,11 @@ function App() {
   useEffect(() => {
     loadTodos();
   }, []);
+
+  const handleSearch = async (query: string) => {
+    const results = await searchTodos(query);
+    setTodos(results);
+  };
 
   const handleAdd = async (todo: Todo) => {
     await addTodo(todo);
@@ -34,19 +46,27 @@ function App() {
   return (
     <div className="App">
       <h1>To-Do List</h1>
-      <TodoForm onAdd={handleAdd} />
-      <ul className="todo-list">
-        {todos.map((todo) => (
-          <TodoItem
-            key={todo.id}
-            todo={todo}
-            onUpdate={handleUpdate}
-            onDelete={handleDelete}
-          />
-        ))}
-      </ul>
+      <TodoListHeader>
+        <SearchBar onSearch={handleSearch} />
+        <AddTodoModal onAdd={handleAdd} />
+      </TodoListHeader>
+      <Dashboard />
+      <TodoListGrid
+        todos={todos}
+        onUpdate={handleUpdate}
+        onDelete={handleDelete}
+      />
     </div>
   );
 }
+
+const TodoListHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+`;
 
 export default App;

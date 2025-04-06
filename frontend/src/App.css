@@ -1,93 +1,14 @@
 .App {
-  margin: 2rem;
+  margin: 5rem;
 }
 
 h1 {
-  text-align: center;
-  color: #4a90e2;
-  margin-bottom: 1rem;
-}
-
-form {
-  display: flex;
-  justify-content: center;
-  gap: 6px;
+  text-align: left;
   margin-bottom: 2rem;
-}
-
-input[type="text"] {
-  padding: 0.5rem;
-  border: 1px solid #4a90e2;
-  border-radius: 6px;
-  background-color: #ffffff;
-  color: #333;
-  transition: border 0.3s;
 }
 
 input[type="text"]:focus {
   outline: none;
-}
-
-button {
-  background: #4a90e2;
-  color: white;
-  border: none;
-  padding: 0.5rem 0.75rem;
-  border-radius: 6px;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.3s;
-}
-
-button:hover {
-  background-color: #357ab8;
-}
-
-ul.todo-list {
-  list-style: none;
-  padding: 0;
-  margin: 0 auto;
-  max-width: 750px;
-  width: 100%;
-}
-
-ul.todo-list li {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  background: transparent;
-  gap: 12px;
-  padding: 1rem 0.5rem;
-  border-bottom: 1px solid #d0e7f9;
-  flex-wrap: wrap;
-}
-
-.todo-text {
-  display: flex;
-  flex: 1;
-}
-
-.todo-actions {
-  display: flex;
-  gap: 6px;
-}
-
-.todo-due {
-  font-size: 0.9rem;
-  color: #4a90e2;
-  margin-left: 32px;
-}
-
-ul.todo-list li:last-child {
-  border-bottom: none;
-}
-
-li.completed .todo-text {
-  text-decoration: line-through;
-  color: #a0a0a0;
 }
 
 input[type="checkbox"] {
@@ -118,16 +39,4 @@ input[type="checkbox"]:checked::after {
   border: solid white;
   border-width: 0 2px 2px 0;
   transform: translate(-50%, -50%) rotate(45deg);
-}
-
-input[type="date"] {
-  padding: 0.5rem;
-  border: 1px solid #4a90e2;
-  border-radius: 6px;
-  background-color: #ffffff;
-  color: #333;
-}
-
-input[type="date"]:focus {
-  outline: none;
 }
