@@ -31,7 +31,6 @@ class TodoItem(BaseModel):
     id: int
     title: str
     description: str
-    completed: bool
     due_date: datetime.date | None
     status: TodoStatus = TodoStatus.not_started
 
