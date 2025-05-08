@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Todo } from "../types";
+import { Priority, Todo } from "../types";
 import { formatDate } from "../utils";
 import { Button } from "./common";
 import styled from "styled-components";
@@ -17,6 +17,9 @@ export const TodoItem = ({
   const [title, setTitle] = useState(todo.title);
   const [description, setDescription] = useState(todo.description);
   const [dueDate, setDueDate] = useState(todo.due_date || "");
+  const [priority, setPriority] = useState<Priority | null>(
+    todo.priority || null
+  );
 
   const toggleComplete = () => {
     const newStatus = todo.status === "완료" ? "진행 중" : "완료";
@@ -24,7 +27,7 @@ export const TodoItem = ({
   };
 
   const handleSave = () => {
-    onUpdate({ ...todo, title, description, due_date: dueDate });
+    onUpdate({ ...todo, title, description, due_date: dueDate, priority });
     setEditing(false);
   };
 
@@ -77,6 +80,27 @@ export const TodoItem = ({
           todo.due_date && <span>{formatDate(todo.due_date)}</span>
         )}
       </Meta>
+
+      {editing ? (
+        <PrioritySelect>
+          <label>우선순위:</label>
+          <select
+            value={priority || ""}
+            onChange={(e) => {
+              setPriority(
+                e.target.value === "" ? null : (e.target.value as Priority)
+              );
+            }}
+          >
+            <option value="">없음</option>
+            <option value={Priority.high}>{Priority.high}</option>
+            <option value={Priority.medium}>{Priority.medium}</option>
+            <option value={Priority.low}>{Priority.low}</option>
+          </select>
+        </PrioritySelect>
+      ) : (
+        <>{priority}</>
+      )}
 
       <Actions>
         <Button onClick={() => (editing ? handleSave() : setEditing(true))}>
@@ -146,5 +170,32 @@ const EditInput = styled.input`
   &:focus {
     border-color: #3b82f6;
     outline: none;
+  }
+`;
+
+const PrioritySelect = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+
+  label {
+    font-size: 0.9rem;
+    color: #374151;
+  }
+
+  select {
+    padding: 0.5rem;
+    font-size: 0.9rem;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    color: #374151;
+    background-color: white;
+    outline: none;
+
+    &:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+    }
   }
 `;

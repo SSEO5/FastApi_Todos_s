@@ -10,6 +10,7 @@ import { Todo } from "./types";
 import { AddTodoModal, Dashboard, SearchBar, TodoListGrid } from "./components";
 import "./App.css";
 import { styled } from "styled-components";
+import { PriorityDashboard } from "./components/PriorityDashboard";
 
 function App() {
   const [todos, setTodos] = useState<Todo[]>([]);
@@ -56,6 +57,7 @@ function App() {
         onUpdate={handleUpdate}
         onDelete={handleDelete}
       />
+      <PriorityDashboard />
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import axios from "axios";
-import { Todo, TodoStats } from "../types";
+import { Priority, Todo, TodoStats } from "../types";
 
 const API_BASE = `${process.env.REACT_APP_API_URL}/todos`;
 
@@ -36,5 +36,12 @@ export async function searchTodos(query = ""): Promise<Todo[]> {
 
 export async function fetchTodoStats(): Promise<TodoStats> {
   const res = await api.get<TodoStats>("/stats");
+  return res.data;
+}
+
+export async function fetchTodosByPriority(
+  priority: Priority
+): Promise<Todo[]> {
+  const res = await api.get<Todo[]>(`/priority/${priority}`);
   return res.data;
 }

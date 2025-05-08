@@ -1,6 +1,6 @@
 import { useState } from "react";
 import styled from "styled-components";
-import { Todo } from "../types";
+import { Priority, Todo } from "../types";
 import { Button } from "./common";
 
 export const TodoForm = ({ onAdd }: { onAdd: (todo: Todo) => void }) => {
@@ -8,6 +8,7 @@ export const TodoForm = ({ onAdd }: { onAdd: (todo: Todo) => void }) => {
   const [description, setDescription] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [status, setStatus] = useState<Todo["status"]>("시작 전");
+  const [priority, setPriority] = useState<Priority | null>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -17,10 +18,12 @@ export const TodoForm = ({ onAdd }: { onAdd: (todo: Todo) => void }) => {
       description,
       due_date: dueDate || null,
       status,
+      priority,
     });
     setTitle("");
     setDescription("");
     setDueDate("");
+    setPriority(null);
   };
 
   return (
@@ -66,6 +69,20 @@ export const TodoForm = ({ onAdd }: { onAdd: (todo: Todo) => void }) => {
           ))}
         </StatusButtons>
       </Field>
+
+      <Field>
+        <Label>우선순위</Label>
+        <Select
+          value={priority || ""}
+          onChange={(e) => setPriority(e.target.value as Priority | null)}
+        >
+          <option value="">없음</option>
+          <option value={Priority.high}>{Priority.high}</option>
+          <option value={Priority.medium}>{Priority.medium}</option>
+          <option value={Priority.low}>{Priority.low}</option>
+        </Select>
+      </Field>
+
       <ButtonWrapper>
         <Button type="submit">추가</Button>
       </ButtonWrapper>
@@ -129,4 +146,19 @@ const ButtonWrapper = styled.div`
   margin-top: 1rem;
   display: flex;
   justify-content: flex-end;
+`;
+
+const Select = styled.select`
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  outline: none;
+  color: #374151;
+  background-color: white;
+
+  &:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+  }
 `;

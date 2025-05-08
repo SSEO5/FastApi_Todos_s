@@ -4,6 +4,7 @@ export type Todo = {
   description: string;
   due_date: string | null;
   status: "시작 전" | "진행 중" | "완료";
+  priority?: Priority | null;
 };
 
 export type TodoStats = {
@@ -11,3 +12,9 @@ export type TodoStats = {
   completed: number;
   not_completed: number;
 };
+
+export enum Priority {
+  high = "높음",
+  medium = "중간",
+  low = "낮음",
+}
