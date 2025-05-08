@@ -26,6 +26,12 @@ class TodoStatus(str, Enum):
     completed = "완료"
 
 
+class Priority(str, Enum):
+    high = "높음"
+    medium = "중간"
+    low = "낮음"
+
+
 # To-Do 항목 모델
 class TodoItem(BaseModel):
     id: int
@@ -33,6 +39,7 @@ class TodoItem(BaseModel):
     description: str
     due_date: datetime.date | None
     status: TodoStatus = TodoStatus.not_started
+    priority: Priority | None = None
 
 
 # JSON 파일 경로
@@ -120,3 +127,10 @@ def todo_stats():
         "completed": len(completed),
         "not_completed": len(not_completed),
     }
+
+
+@app.get("/todos/priority/{priority}", response_model=list[TodoItem])
+def get_todos_by_priority(priority: Priority):
+    todos = load_todos()
+    results = [todo for todo in todos if todo.get("priority") == priority.value]
+    return results
