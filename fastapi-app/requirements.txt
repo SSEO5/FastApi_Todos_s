@@ -6,3 +6,5 @@ httpx
 pytest-cov
 requests
 python-dotenv
+prometheus-fastapi-instrumentator
+prometheus-client
