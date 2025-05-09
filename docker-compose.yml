@@ -6,7 +6,7 @@ services:
       context: ./fastapi-app # Dockerfile이 위치한 디렉토리 경로
       dockerfile: Dockerfile # Dockerfile 이름 (생략 가능, 기본값은 'Dockerfile')
     ports:
-      - "8002:8002"
+      - "8003:8003"
 
   frontend:
     build:
@@ -16,7 +16,7 @@ services:
         REACT_APP_API_URL: "${REACT_APP_API_URL}"
     container_name: frontend-app
     ports:
-      - "5000:80"
+      - "5001:5001"
     depends_on:
       - fastapi-app
 
