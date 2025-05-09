@@ -7,9 +7,12 @@ import os
 import datetime
 from fastapi.middleware.cors import CORSMiddleware
 from enum import Enum
+from prometheus_fastapi_instrumentator import Instrumentator
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
+
+Instrumentator().instrument(app).expose(app, endpoint="/metrics")
 
 app.add_middleware(
     CORSMiddleware,
