@@ -1,8 +1,15 @@
-import { useState } from "react";
-import { Priority, Todo } from "../types";
+import { useEffect, useState } from "react";
+import { Priority, SubTask, Todo } from "../types";
 import { formatDate } from "../utils";
 import { Button } from "./common";
 import styled from "styled-components";
+import {
+  addSubtask,
+  deleteSubtask,
+  fetchSubtasks,
+  updateSubtask,
+} from "../api";
+import { SubTaskList } from "./SubTaskList";
 
 export const TodoItem = ({
   todo,
@@ -21,6 +28,28 @@ export const TodoItem = ({
     todo.priority || null
   );
 
+  // 서브태스크 관련 상태
+  const [subtasks, setSubtasks] = useState<SubTask[]>([]);
+  const [showSubtasks, setShowSubtasks] = useState(false);
+  const [isSubtasksLoaded, setIsSubtasksLoaded] = useState(false);
+
+  // 서브태스크 데이터 로드
+  useEffect(() => {
+    if (showSubtasks && !isSubtasksLoaded) {
+      const loadSubtasks = async () => {
+        try {
+          const data = await fetchSubtasks(todo.id);
+          setSubtasks(data);
+          setIsSubtasksLoaded(true);
+        } catch (error) {
+          console.error("서브태스크 로드 중 오류 발생:", error);
+        }
+      };
+
+      loadSubtasks();
+    }
+  }, [todo.id, showSubtasks, isSubtasksLoaded]);
+
   const toggleComplete = () => {
     const newStatus = todo.status === "완료" ? "진행 중" : "완료";
     onUpdate({ ...todo, status: newStatus });
@@ -29,6 +58,40 @@ export const TodoItem = ({
   const handleSave = () => {
     onUpdate({ ...todo, title, description, due_date: dueDate, priority });
     setEditing(false);
+  };
+
+  // 서브태스크 핸들러
+  const handleAddSubtask = async (todoId: number, subtask: SubTask) => {
+    try {
+      const createdSubtask = await addSubtask(todoId, subtask);
+      setSubtasks([...subtasks, createdSubtask]);
+    } catch (error) {
+      console.error("서브태스크 추가 중 오류 발생:", error);
+    }
+  };
+
+  const handleUpdateSubtask = async (
+    todoId: number,
+    subtaskId: number,
+    updatedSubtask: SubTask
+  ) => {
+    try {
+      await updateSubtask(todoId, subtaskId, updatedSubtask);
+      setSubtasks(
+        subtasks.map((st) => (st.id === subtaskId ? updatedSubtask : st))
+      );
+    } catch (error) {
+      console.error("서브태스크 업데이트 중 오류 발생:", error);
+    }
+  };
+
+  const handleDeleteSubtask = async (todoId: number, subtaskId: number) => {
+    try {
+      await deleteSubtask(todoId, subtaskId);
+      setSubtasks(subtasks.filter((st) => st.id !== subtaskId));
+    } catch (error) {
+      console.error("서브태스크 삭제 중 오류 발생:", error);
+    }
   };
 
   return (
@@ -107,7 +170,20 @@ export const TodoItem = ({
           {editing ? "완료" : "수정"}
         </Button>
         <Button onClick={() => onDelete(todo.id)}>삭제</Button>
+        <Button onClick={() => setShowSubtasks(!showSubtasks)}>
+          {showSubtasks ? "서브태스크 닫기" : "서브태스크 보기"}
+        </Button>
       </Actions>
+
+      {showSubtasks && (
+        <SubTaskList
+          todoId={todo.id}
+          subtasks={subtasks}
+          onAddSubtask={handleAddSubtask}
+          onUpdateSubtask={handleUpdateSubtask}
+          onDeleteSubtask={handleDeleteSubtask}
+        />
+      )}
     </Card>
   );
 };

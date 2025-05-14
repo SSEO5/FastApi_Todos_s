@@ -18,3 +18,9 @@ export enum Priority {
   medium = "중간",
   low = "낮음",
 }
+
+export type SubTask = {
+  id: number;
+  title: string;
+  completed: boolean;
+};

@@ -35,6 +35,12 @@ class Priority(str, Enum):
     low = "낮음"
 
 
+class SubTask(BaseModel):
+    id: int
+    title: str
+    completed: bool = False
+
+
 # To-Do 항목 모델
 class TodoItem(BaseModel):
     id: int
@@ -43,6 +49,7 @@ class TodoItem(BaseModel):
     due_date: datetime.date | None
     status: TodoStatus = TodoStatus.not_started
     priority: Priority | None = None
+    subtasks: list[SubTask] = []
 
 
 # JSON 파일 경로
@@ -137,3 +144,62 @@ def get_todos_by_priority(priority: Priority):
     todos = load_todos()
     results = [todo for todo in todos if todo.get("priority") == priority.value]
     return results
+
+
+@app.get("/todos/{todo_id}/subtasks", response_model=list[SubTask])
+def get_subtasks(todo_id: int):
+    todos = load_todos()
+    for todo in todos:
+        if todo["id"] == todo_id:
+            return todo.get("subtasks", [])
+    raise HTTPException(status_code=404, detail="To-Do item not found")
+
+
+@app.post("/todos/{todo_id}/subtasks", response_model=SubTask)
+def add_subtask(todo_id: int, subtask: SubTask):
+    todos = load_todos()
+    for todo in todos:
+        if todo["id"] == todo_id:
+            if "subtasks" not in todo:
+                todo["subtasks"] = []
+
+            todo["subtasks"].append(subtask.model_dump(mode="json"))
+            save_todos(todos)
+            return subtask
+    raise HTTPException(status_code=404, detail="To-Do item not found")
+
+
+@app.put("/todos/{todo_id}/subtasks/{subtask_id}", response_model=SubTask)
+def update_subtask(todo_id: int, subtask_id: int, updated_subtask: SubTask):
+    todos = load_todos()
+    for todo in todos:
+        if todo["id"] == todo_id and "subtasks" in todo:
+            for i, subtask in enumerate(todo["subtasks"]):
+                if subtask["id"] == subtask_id:
+                    updated_data = updated_subtask.model_dump(mode="json")
+                    updated_data["id"] = subtask_id
+
+                    todo["subtasks"][i] = updated_data
+                    save_todos(todos)
+                    return updated_subtask
+
+            raise HTTPException(status_code=404, detail="Subtask not found")
+
+    raise HTTPException(status_code=404, detail="To-Do item not found")
+
+
+@app.delete("/todos/{todo_id}/subtasks/{subtask_id}", response_model=dict)
+def delete_subtask(todo_id: int, subtask_id: int):
+    todos = load_todos()
+    for todo in todos:
+        if todo["id"] == todo_id and "subtasks" in todo:
+            original_length = len(todo["subtasks"])
+            todo["subtasks"] = [st for st in todo["subtasks"] if st["id"] != subtask_id]
+
+            if len(todo["subtasks"]) < original_length:
+                save_todos(todos)
+                return {"message": "Subtask deleted"}
+
+            raise HTTPException(status_code=404, detail="Subtask not found")
+
+    raise HTTPException(status_code=404, detail="To-Do item not found")
