@@ -1,5 +1,5 @@
 import axios from "axios";
-import { Priority, Todo, TodoStats, SubTask } from "../types";
+import { Priority, Todo, TodoStats, SubTask, Attachment } from "../types";
 
 const API_BASE = `${process.env.REACT_APP_API_URL}/todos`;
 
@@ -85,4 +85,37 @@ export async function toggleSubtaskCompletion(
 ): Promise<SubTask> {
   const updatedSubtask = { ...subtask, completed: !subtask.completed };
   return updateSubtask(todoId, subtaskId, updatedSubtask);
+}
+
+export async function uploadAttachment(
+  todoId: number,
+  file: File
+): Promise<Attachment> {
+  const formData = new FormData();
+  formData.append("file", file);
+  const res = await api.post<Attachment>(`/${todoId}/attachments`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+  return res.data;
+}
+
+export async function fetchAttachments(todoId: number): Promise<Attachment[]> {
+  const res = await api.get<Attachment[]>(`/${todoId}/attachments`);
+  return res.data;
+}
+
+export function getAttachmentDownloadUrl(
+  todoId: number,
+  attachmentId: string
+): string {
+  return `${API_BASE}/${todoId}/attachments/${attachmentId}/download`;
+}
+
+export async function deleteAttachment(
+  todoId: number,
+  attachmentId: string
+): Promise<void> {
+  await api.delete(`/${todoId}/attachments/${attachmentId}`);
 }

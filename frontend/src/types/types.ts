@@ -5,6 +5,7 @@ export type Todo = {
   due_date: string | null;
   status: "시작 전" | "진행 중" | "완료";
   priority?: Priority | null;
+  attachments?: Attachment[];
 };
 
 export type TodoStats = {
@@ -23,4 +24,12 @@ export type SubTask = {
   id: number;
   title: string;
   completed: boolean;
+};
+
+export type Attachment = {
+  id: string;
+  filename: string;
+  original_filename: string;
+  file_type: string;
+  upload_date: string;
 };

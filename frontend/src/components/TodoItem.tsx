@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Priority, SubTask, Todo } from "../types";
+import { Attachment, Priority, SubTask, Todo } from "../types";
 import { formatDate } from "../utils";
 import { Button } from "./common";
 import styled from "styled-components";
@@ -8,8 +8,10 @@ import {
   deleteSubtask,
   fetchSubtasks,
   updateSubtask,
+  fetchAttachments,
 } from "../api";
 import { SubTaskList } from "./SubTaskList";
+import { AttachmentUploader } from "./AttachmentUploader";
 
 export const TodoItem = ({
   todo,
@@ -33,6 +35,13 @@ export const TodoItem = ({
   const [showSubtasks, setShowSubtasks] = useState(false);
   const [isSubtasksLoaded, setIsSubtasksLoaded] = useState(false);
 
+  // 첨부 파일 관련 상태
+  const [attachments, setAttachments] = useState<Attachment[]>(
+    todo.attachments || []
+  ); // todo.attachments 초기값 설정
+  const [showAttachments, setShowAttachments] = useState(false); // 첨부 파일 섹션 표시 여부
+  const [isAttachmentsLoaded, setIsAttachmentsLoaded] = useState(false);
+
   // 서브태스크 데이터 로드
   useEffect(() => {
     if (showSubtasks && !isSubtasksLoaded) {
@@ -50,13 +59,35 @@ export const TodoItem = ({
     }
   }, [todo.id, showSubtasks, isSubtasksLoaded]);
 
+  useEffect(() => {
+    if (showAttachments && !isAttachmentsLoaded) {
+      const loadAttachments = async () => {
+        try {
+          const data = await fetchAttachments(todo.id);
+          setAttachments(data);
+          setIsAttachmentsLoaded(true);
+        } catch (error) {
+          console.error("첨부 파일 로드 중 오류 발생:", error);
+        }
+      };
+      loadAttachments();
+    }
+  }, [todo.id, showAttachments, isAttachmentsLoaded]);
+
   const toggleComplete = () => {
     const newStatus = todo.status === "완료" ? "진행 중" : "완료";
     onUpdate({ ...todo, status: newStatus });
   };
 
   const handleSave = () => {
-    onUpdate({ ...todo, title, description, due_date: dueDate, priority });
+    onUpdate({
+      ...todo,
+      title,
+      description,
+      due_date: dueDate,
+      priority,
+      attachments,
+    });
     setEditing(false);
   };
 
@@ -92,6 +123,10 @@ export const TodoItem = ({
     } catch (error) {
       console.error("서브태스크 삭제 중 오류 발생:", error);
     }
+  };
+
+  const handleAttachmentsChange = (updatedAttachments: Attachment[]) => {
+    setAttachments(updatedAttachments);
   };
 
   return (
@@ -173,6 +208,9 @@ export const TodoItem = ({
         <Button onClick={() => setShowSubtasks(!showSubtasks)}>
           {showSubtasks ? "서브태스크 닫기" : "서브태스크 보기"}
         </Button>
+        <Button onClick={() => setShowAttachments(!showAttachments)}>
+          {showAttachments ? "첨부 파일 닫기" : "첨부 파일 보기"}
+        </Button>
       </Actions>
 
       {showSubtasks && (
@@ -182,6 +220,14 @@ export const TodoItem = ({
           onAddSubtask={handleAddSubtask}
           onUpdateSubtask={handleUpdateSubtask}
           onDeleteSubtask={handleDeleteSubtask}
+        />
+      )}
+
+      {showAttachments && (
+        <AttachmentUploader
+          todoId={todo.id}
+          initialAttachments={attachments} // 초기 첨부 파일 목록 전달
+          onAttachmentsChange={handleAttachmentsChange} // 첨부 파일 변경 콜백 전달
         />
       )}
     </Card>
