@@ -1,5 +1,5 @@
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import HTMLResponse
+from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 import json
@@ -8,9 +8,16 @@ import datetime
 from fastapi.middleware.cors import CORSMiddleware
 from enum import Enum
 from prometheus_fastapi_instrumentator import Instrumentator
+import shutil
+import uuid
+
+UPLOAD_DIRECTORY = "uploads"
+if not os.path.exists(UPLOAD_DIRECTORY):
+    os.makedirs(UPLOAD_DIRECTORY)
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/uploads", StaticFiles(directory=UPLOAD_DIRECTORY), name="uploads")
 
 Instrumentator().instrument(app).expose(app, endpoint="/metrics")
 
@@ -41,6 +48,13 @@ class SubTask(BaseModel):
     completed: bool = False
 
 
+class Attachment(BaseModel):
+    id: str
+    filename: str
+    original_filename: str
+    file_type: str
+
+
 # To-Do 항목 모델
 class TodoItem(BaseModel):
     id: int
@@ -50,6 +64,7 @@ class TodoItem(BaseModel):
     status: TodoStatus = TodoStatus.not_started
     priority: Priority | None = None
     subtasks: list[SubTask] = []
+    attachments: list[Attachment] = []
 
 
 # JSON 파일 경로
@@ -201,5 +216,99 @@ def delete_subtask(todo_id: int, subtask_id: int):
                 return {"message": "Subtask deleted"}
 
             raise HTTPException(status_code=404, detail="Subtask not found")
+
+    raise HTTPException(status_code=404, detail="To-Do item not found")
+
+
+@app.post("/todos/{todo_id}/attachments", response_model=Attachment)
+async def upload_attachment(todo_id: int, file: UploadFile = File(...)):
+    todos = load_todos()
+    for todo in todos:
+        if todo["id"] == todo_id:
+            # 고유한 파일 이름 생성 (UUID 사용)
+            file_extension = os.path.splitext(file.filename)[1]
+            unique_filename = f"{uuid.uuid4()}{file_extension}"
+            file_path = os.path.join(UPLOAD_DIRECTORY, unique_filename)
+
+            # 파일 저장
+            try:
+                with open(file_path, "wb") as buffer:
+                    shutil.copyfileobj(file.file, buffer)
+            except Exception:
+                raise HTTPException(status_code=500, detail="Failed to upload file")
+            finally:
+                file.file.close()
+
+            # To-Do Item에 첨부 파일 정보 추가
+            attachment_info = Attachment(
+                id=str(uuid.uuid4()),  # 첨부 파일 자체의 고유 ID
+                filename=unique_filename,
+                original_filename=file.filename,
+                file_type=file.content_type,
+            )
+            if "attachments" not in todo:
+                todo["attachments"] = []
+            todo["attachments"].append(attachment_info.model_dump(mode="json"))
+            save_todos(todos)
+            return attachment_info
+    raise HTTPException(status_code=404, detail="To-Do item not found")
+
+
+@app.get("/todos/{todo_id}/attachments", response_model=list[Attachment])
+def get_attachments(todo_id: int):
+    todos = load_todos()
+    for todo in todos:
+        if todo["id"] == todo_id:
+            return todo.get("attachments", [])
+    raise HTTPException(status_code=404, detail="To-Do item not found")
+
+
+@app.get("/todos/{todo_id}/attachments/{attachment_id}/download")
+async def download_attachment(todo_id: int, attachment_id: str):
+    todos = load_todos()
+    for todo in todos:
+        if todo["id"] == todo_id:
+            for attachment in todo.get("attachments", []):
+                if attachment["id"] == attachment_id:
+                    file_path = os.path.join(UPLOAD_DIRECTORY, attachment["filename"])
+                    if os.path.exists(file_path):
+                        return FileResponse(
+                            path=file_path,
+                            filename=attachment["original_filename"],
+                            media_type=attachment["file_type"],
+                        )
+                    raise HTTPException(
+                        status_code=404, detail="Attachment file not found on server"
+                    )
+            raise HTTPException(
+                status_code=404, detail="Attachment not found in To-Do item"
+            )
+    raise HTTPException(status_code=404, detail="To-Do item not found")
+
+
+@app.delete("/todos/{todo_id}/attachments/{attachment_id}", response_model=dict)
+def delete_attachment(todo_id: int, attachment_id: str):
+    todos = load_todos()
+    for todo in todos:
+        if todo["id"] == todo_id and "attachments" in todo:
+            attachment_to_delete = None
+            for att in todo["attachments"]:
+                if att["id"] == attachment_id:
+                    attachment_to_delete = att
+                    break
+
+            if attachment_to_delete:
+                todo["attachments"] = [
+                    att for att in todo["attachments"] if att["id"] != attachment_id
+                ]
+                file_path = os.path.join(
+                    UPLOAD_DIRECTORY, attachment_to_delete["filename"]
+                )
+                if os.path.exists(file_path):
+                    os.remove(file_path)
+                save_todos(todos)
+                return {"message": "Attachment deleted successfully"}
+
+            raise HTTPException(status_code=404, detail="Attachment not found")
 
     raise HTTPException(status_code=404, detail="To-Do item not found")
