@@ -1,10 +1,29 @@
 import axios from "axios";
-import { Priority, Todo, TodoStats, SubTask, Attachment } from "../types";
+import {
+  Priority,
+  Todo,
+  TodoStats,
+  SubTask,
+  Attachment,
+  CompletionTrend,
+  DashboardData,
+  DueAlerts,
+  MonthlyStats,
+  PriorityCompletion,
+} from "../types";
 
 const API_BASE = `${process.env.REACT_APP_API_URL}/todos`;
+const DASHBOARD_BASE = `${process.env.REACT_APP_API_URL}/dashboard`;
 
 const api = axios.create({
   baseURL: API_BASE,
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
+
+const dashboardApi = axios.create({
+  baseURL: DASHBOARD_BASE,
   headers: {
     "Content-Type": "application/json",
   },
@@ -118,4 +137,31 @@ export async function deleteAttachment(
   attachmentId: string
 ): Promise<void> {
   await api.delete(`/${todoId}/attachments/${attachmentId}`);
+}
+
+export async function fetchDashboardData(): Promise<DashboardData> {
+  const res = await dashboardApi.get<DashboardData>("/");
+  return res.data;
+}
+
+export async function fetchCompletionTrend(): Promise<CompletionTrend[]> {
+  const res = await dashboardApi.get<CompletionTrend[]>("/completion-trend");
+  return res.data;
+}
+
+export async function fetchPriorityCompletion(): Promise<PriorityCompletion[]> {
+  const res = await dashboardApi.get<PriorityCompletion[]>(
+    "/priority-completion"
+  );
+  return res.data;
+}
+
+export async function fetchMonthlyStats(): Promise<MonthlyStats[]> {
+  const res = await dashboardApi.get<MonthlyStats[]>("/monthly-stats");
+  return res.data;
+}
+
+export async function fetchDueAlerts(): Promise<DueAlerts> {
+  const res = await dashboardApi.get<DueAlerts>("/due-alerts");
+  return res.data;
 }
