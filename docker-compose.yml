@@ -9,6 +9,18 @@ services:
       - "8003:8003"
     networks:
       - loadtest-net
+    depends_on:
+      - loki
+    environment:
+      - LOKI_ENDPOINT=http://loki:3100/loki/api/v1/push
+
+  loki:
+    image: grafana/loki:latest
+    container_name: loki
+    networks:
+      - loadtest-net
+    ports:
+      - "3100:3100"
 
   frontend:
     build:

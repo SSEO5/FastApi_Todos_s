@@ -4,10 +4,16 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 import json
 import os
+import logging
+import time
+from multiprocessing import Queue
+from os import getenv
+from fastapi import Request
 import datetime
 from fastapi.middleware.cors import CORSMiddleware
 from enum import Enum
 from prometheus_fastapi_instrumentator import Instrumentator
+from logging_loki import LokiQueueHandler
 import shutil
 import uuid
 
@@ -28,6 +34,35 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+loki_logs_handler = LokiQueueHandler(
+    Queue(-1),
+    url=getenv("LOKI_ENDPOINT"),
+    tags={"application": "fastapi"},
+    version="1",
+)
+
+# Custom access logger (ignore Uvicorn's default logging)
+custom_logger = logging.getLogger("custom.access")
+custom_logger.setLevel(logging.INFO)
+
+# Add Loki handler (assuming `loki_logs_handler` is correctly configured)
+custom_logger.addHandler(loki_logs_handler)
+
+
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    start_time = time.time()
+    response = await call_next(request)
+    duration = time.time() - start_time  # Compute response time
+
+    log_message = f'{request.client.host} - "{request.method} {request.url.path} HTTP/1.1" {response.status_code} {duration:.3f}s'
+
+    # **Only log if duration exists**
+    if duration:
+        custom_logger.info(log_message)
+
+    return response
 
 
 class TodoStatus(str, Enum):
